@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribuição de Leads</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <style>
+        body {
+            background-color: #f4f7fc;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #007bff;
+            font-weight: bold;
+            margin-bottom: 2rem;
+        }
+
+        .row {
+            margin-bottom: 15px;
+        }
+
+        .consultor-name {
+            width: 50%;
+        }
+
+        .consultor-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .consultor-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            background-color: #ffffff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            border-radius: 5px;
+            padding: 8px 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        .btn-success {
+            background-color: #28a745;
+            border-color: #28a745;
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+            border-color: #1e7e34;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        .btn-warning {
+            background-color: #ffc107;
+            border-color: #ffc107;
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+            border-color: #d39e00;
+        }
+
+        .leads-container {
+            display: none;
+            margin-top: 10px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 0.9rem;
+            color: #333;
+            position: absolute;
+            z-index: 10;
+            max-width: 300px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .leads-container h5 {
+            color: #007bff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .leads-container::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px;
+            border-style: solid;
+            border-color: transparent transparent #ddd transparent;
+        }
+
+        .leads-container::after {
+            content: "";
+            position: absolute;
+            top: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 8px;
+            border-style: solid;
+            border-color: transparent transparent #f8f9fa transparent;
+        }
+
+        .view-leads {
+            position: relative;
+            z-index: 5;
+        }
+
+        .add-empty-consultor {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+
+        .add-empty-consultor:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+
+        .consultor-list li:hover {
+            background-color: #f1f3f5;
+        }
+
+        .consultor-list li .consultor-name {
+            margin-right: 15px;
+        }
+
+        .reset-button {
+            margin-top: 30px;
+        }
+
+        .restricted-area {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container mt-4">
+    <h1 class="text-center mb-4">Distribuição de Leads</h1>
+
+    <!-- Formulário de distribuição de leads -->
+    <form id="lead-form" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <input type="text" id="lead_id" class="form-control" placeholder="ID do Lead" required>
+            </div>
+            <div class="col-md-4">
+                <select id="region" class="form-select" required>
+                    {% for region in regions %}
+                    <option value="{{ region }}">{{ region }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">Adicionar Lead</button>
+            </div>
+        </div>
+    </form>
+
+    <p id="result-message" class="text-success"></p>
+
+    <!-- Login para acessar a área restrita -->
+    <button id="login-button" class="btn btn-info w-100 mb-4">Entrar na área de Consultores</button>
+    <div id="login-form" class="d-none">
+        <div class="mb-3">
+            <label for="username" class="form-label">Login:</label>
+            <input type="text" id="username" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label">Senha:</label>
+            <input type="password" id="password" class="form-control">
+        </div>
+        <button id="submit-login" class="btn btn-success w-100">Entrar</button>
+    </div>
+
+    <!-- Área restrita de consultores -->
+    <div id="restricted-area" class="restricted-area">
+        {% for region, consultors in regions.items() %}
+        <div class="mb-5">
+            <h3>{{ region }}</h3>
+            <ul class="consultor-list" data-region="{{ region }}">
+                {% for consultor in consultors %}
+                <li id="consultor-{{ consultor | replace(' ', '-') }}">
+                    <input type="text" class="consultor-name form-control d-inline" value="{{ consultor }}" disabled>
+                    <button class="btn btn-sm btn-secondary view-leads ms-3" data-name="{{ consultor }}">Ver Leads</button>
+                    <span class="ms-3">Leads recebidos: {{ consultor_data[consultor].leads_received }}</span>
+                    <div class="leads-container" id="leads-{{ consultor | replace(' ', '-') }}"></div>
+                    <button class="btn btn-sm btn-success save-edit ms-3" data-original-name="{{ consultor }}">Salvar</button>
+                    <button class="btn btn-sm btn-danger delete-consultor ms-1" data-name="{{ consultor }}">Excluir</button>
+                </li>
+                {% endfor %}
+            </ul>
+            <button class="btn add-empty-consultor w-100 mt-3" data-region="{{ region }}">Adicionar Novo Consultor</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Resetar os dados de leads -->
+    <button id="reset-button" class="btn btn-warning w-100 mt-4 reset-button">Resetar Todos os Leads</button>
+</div>
+
+<script>
+    $(document).ready(function () {
+        // Função de login
+        $('#login-button').click(function () {
+            $('#login-form').removeClass('d-none');
+            $(this).prop('disabled', true);
+        });
+
+        // Autenticação de Login
+        $('#submit-login').click(function () {
+            const username = $('#username').val();
+            const password = $('#password').val();
+
+            if (username === 'admin' && password === 'admin') {
+                $('#restricted-area').show();
+                $('#login-form').addClass('d-none');
+            } else {
+                alert('Credenciais incorretas');
+            }
+        });
+
+        // Resetar os dados de leads
+        $('#reset-button').click(function () {
+            if (confirm("Tem certeza que deseja resetar os dados de leads?")) {
+                $.post('/reset', function (response) {
+                    if (response.success) {
+                        location.reload();
+                    }
+                });
+            }
+        });
+
+        // Exibir leads ao clicar em "Ver Leads"
+        $('.view-leads').click(function () {
+            const consultorName = $(this).data('name');
+            const leadsContainer = $(`#leads-${consultorName.replace(/\s/g, '-')}`);
+            
+            $.post('/get_leads', { consultor_name: consultorName }, function (response) {
+                if (response.success) {
+                    const leads = response.leads.length > 0 
+                        ? response.leads.map(lead => `<div>${lead}</div>`).join('') 
+                        : '<div>Nenhum lead recebido.</div>';
+
+                    leadsContainer.html(`
+                        <h5>Leads Recebidos</h5>
+                        ${leads}
+                    `).slideToggle(200);
+                } else {
+                    alert(response.message);
+                }
+            });
+        });
+
+        // Salvar ou editar consultor
+        $('.consultor-list').on('click', '.save-edit', function () {
+            const originalName = $(this).data('original-name');
+            const newName = $(this).siblings('.consultor-name').val();
+
+            $.post('/edit_consultor', { old_name: originalName, new_name: newName }, function (response) {
+                if (response.success) {
+                    location.reload();
+                }
+            });
+        });
+
+        // Excluir consultor
+        $('.consultor-list').on('click', '.delete-consultor', function () {
+            const consultorName = $(this).data('name');
+
+            $.post('/delete_consultor', { consultor_name: consultorName }, function (response) {
+                if (response.success) {
+                    location.reload();
+                }
+            });
+        });
+
+        // Adicionar um novo consultor persistente
+        $('.add-empty-consultor').click(function () {
+            const region = $(this).data('region');
+
+            const newConsultorName = prompt("Digite o nome do novo consultor:");
+            if (newConsultorName) {
+                $.post('/add_consultor', { region: region, consultor_name: newConsultorName }, function (response) {
+                    if (response.success) {
+                        location.reload();
+                    } else {
+                        alert(response.message);
+                    }
+                });
+            }
+        });
+
+        // Distribuir lead
+        $('#lead-form').submit(function (e) {
+            e.preventDefault();
+            const leadId = $('#lead_id').val();
+            const region = $('#region').val();
+
+            $.post('/distribute_lead', { lead_id: leadId, region: region }, function (response) {
+                if (response.success) {
+                    $('#result-message').html(`
+                        <div class="alert alert-success">
+                            <strong>ID do Lead:</strong> ${response.lead_id} <br>
+                            <strong>Consultor:</strong> ${response.assigned_to} <br>
+                            <strong>Região:</strong> ${response.region} <br>
+                            <strong>Número de Leads Recebidos:</strong> ${response.leads_received} <br>
+                            <button class="btn btn-info mt-3" onclick="copyToClipboard()">Copiar Informações</button>
+                        </div>
+                    `).show();
+
+                    // Função para copiar as informações para a área de transferência
+                    window.copyToClipboard = function () {
+                        const text = `ID do Lead: ${response.lead_id} \nConsultor: ${response.assigned_to} \nRegião: ${response.region} \nNúmero de Leads Recebidos: ${response.leads_received}`;
+                        navigator.clipboard.writeText(text).then(function() {
+                            alert('Informações copiadas para a área de transferência!');
+                        }, function(err) {
+                            console.error('Erro ao copiar:', err);
+                        });
+                    };
+
+                    // Recarregar a página após a adição do lead
+                    setTimeout(function () {
+                        location.reload();  // Isso vai recarregar a página, como o F5
+                    }, 200000); // Aguarda 2 segundos antes de recarregar a página
+                } else {
+                    alert('Erro ao adicionar lead');
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>
